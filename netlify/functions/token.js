@@ -1,10 +1,44 @@
-const { AccessToken } = require('livekit-server-sdk');
+const crypto = require('crypto');
+
+// Simple JWT generation without external dependencies
+function createJWT(apiKey, apiSecret, payload) {
+    const header = {
+        alg: 'HS256',
+        typ: 'JWT'
+    };
+
+    const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
+    const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+
+    const signature = crypto
+        .createHmac('sha256', apiSecret)
+        .update(`${base64Header}.${base64Payload}`)
+        .digest('base64url');
+
+    return `${base64Header}.${base64Payload}.${signature}`;
+}
 
 exports.handler = async (event) => {
+    // Handle CORS preflight
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS'
+            },
+            body: ''
+        };
+    }
+
     // Only allow POST
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+            },
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
@@ -15,6 +49,9 @@ exports.handler = async (event) => {
         if (!room_name || !participant_name) {
             return {
                 statusCode: 400,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 body: JSON.stringify({ error: 'Missing room_name or participant_name' })
             };
         }
@@ -27,27 +64,38 @@ exports.handler = async (event) => {
         if (!apiKey || !apiSecret || !livekitUrl) {
             return {
                 statusCode: 500,
-                body: JSON.stringify({ error: 'LiveKit credentials not configured' })
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                },
+                body: JSON.stringify({
+                    error: 'LiveKit credentials not configured',
+                    debug: {
+                        hasApiKey: !!apiKey,
+                        hasApiSecret: !!apiSecret,
+                        hasUrl: !!livekitUrl
+                    }
+                })
             };
         }
 
-        // Create access token
-        const token = new AccessToken(apiKey, apiSecret, {
-            identity: participant_name,
+        // Create JWT payload
+        const now = Math.floor(Date.now() / 1000);
+        const payload = {
+            iss: apiKey,
+            sub: participant_name,
             name: participant_name,
-            ttl: '10m', // Token expires in 10 minutes
-        });
+            nbf: now,
+            exp: now + 600, // 10 minutes
+            video: {
+                room: room_name,
+                roomJoin: true,
+                canPublish: true,
+                canSubscribe: true,
+                canPublishData: true
+            }
+        };
 
-        // Grant room permissions
-        token.addGrant({
-            room: room_name,
-            roomJoin: true,
-            canPublish: true,
-            canSubscribe: true,
-            canPublishData: true,
-        });
-
-        const jwt = await token.toJwt();
+        const token = createJWT(apiKey, apiSecret, payload);
 
         return {
             statusCode: 200,
@@ -56,7 +104,7 @@ exports.handler = async (event) => {
                 'Access-Control-Allow-Origin': '*',
             },
             body: JSON.stringify({
-                token: jwt,
+                token: token,
                 livekit_url: livekitUrl,
                 room_name: room_name,
                 participant_name: participant_name
@@ -67,9 +115,13 @@ exports.handler = async (event) => {
         console.error('Error generating token:', error);
         return {
             statusCode: 500,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+            },
             body: JSON.stringify({
                 error: 'Failed to generate token',
-                message: error.message
+                message: error.message,
+                stack: error.stack
             })
         };
     }
