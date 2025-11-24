@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚕 Taxi Martínez - San Jacinto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FDB913 0%, #F68B1F 50%, #D32F2F 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #FDB913;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            font-size: 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 15px;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 300px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: linear-gradient(135deg, #999 0%, #777 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .disconnect-btn {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%) !important;
+        }
+
+        #status {
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 18px;
+            min-height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .instructions {
+            margin-top: 40px;
+            padding: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            text-align: left;
+        }
+
+        .instructions p {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .instructions p:before {
+            content: "•";
+            position: absolute;
+            left: 10px;
+            color: #FDB913;
+            font-weight: bold;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            button {
+                padding: 15px 30px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚕</div>
+        <h1>Taxi Martínez</h1>
+        <p class="subtitle">San Jacinto, Uruguay</p>
+
+        <button id="connectBtn" onclick="connect()">
+            📞 Llamar Ahora
+        </button>
+        <button id="disconnectBtn" class="disconnect-btn" onclick="disconnect()" disabled>
+            ❌ Colgar
+        </button>
+
+        <div id="status">
+            <span class="status-icon">👋</span>
+            <span>¡Buen día! Presioná "Llamar Ahora" para hablar con nosotros</span>
+        </div>
+
+        <div class="instructions">
+            <p>Presioná "Llamar Ahora"</p>
+            <p>Permitir el uso del micrófono</p>
+            <p>Hablá naturalmente con nuestro asistente</p>
+            <p>Podés reservar tu taxi para cuando lo necesites</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <script>
+        let room = null;
+        let localAudioTrack = null;
+
+        function updateStatus(icon, text, showSpinner = false) {
+            const status = document.getElementById('status');
+            const spinner = showSpinner ? '<span class="spinner"></span>' : '';
+            status.innerHTML = `<span class="status-icon">${icon}</span><span>${text} ${spinner}</span>`;
+        }
+
+        async function connect() {
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+
+            try {
+                updateStatus('🔄', 'Conectando...', true);
+                connectBtn.disabled = true;
+
+                // Get token from backend
+                const response = await fetch('/.netlify/functions/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        room_name: 'taxi-martinez-' + Date.now(),
+                        participant_name: 'Cliente-' + Math.floor(Math.random() * 10000)
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('No se pudo conectar al servicio');
+                }
+
+                const { token, livekit_url } = await response.json();
+
+                // Create room
+                room = new LivekitClient.Room();
+
+                // Event handlers
+                room.on('participantConnected', (participant) => {
+                    updateStatus('👤', `Asistente conectado: ${participant.identity}`);
+                    console.log('Participant connected:', participant.identity);
+                });
+
+                room.on('trackSubscribed', (track, publication, participant) => {
+                    if (track.kind === 'audio') {
+                        const audioElement = track.attach();
+                        document.body.appendChild(audioElement);
+                        updateStatus('🎙️', 'Llamada activa - Hablá con el asistente');
+                    }
+                });
+
+                room.on('disconnected', () => {
+                    updateStatus('📵', 'Llamada finalizada');
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                });
+
+                // Connect
+                await room.connect(livekit_url, token);
+
+                // Publish local audio
+                localAudioTrack = await LivekitClient.createLocalAudioTrack();
+                await room.localParticipant.publishTrack(localAudioTrack);
+
+                updateStatus('✅', 'Conectado - El asistente te va a atender al toque');
+                disconnectBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error conectando:', error);
+                updateStatus('❌', `Error: ${error.message}`);
+                connectBtn.disabled = false;
+            }
+        }
+
+        async function disconnect() {
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+
+            updateStatus('🔄', 'Desconectando...', true);
+
+            if (room) {
+                await room.disconnect();
+                room = null;
+            }
+
+            if (localAudioTrack) {
+                localAudioTrack.stop();
+                localAudioTrack = null;
+            }
+
+            updateStatus('👋', '¡Hasta pronto! Llamá cuando necesites');
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
