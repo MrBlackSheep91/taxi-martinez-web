@@ -188,7 +188,7 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/livekit-client@2.5.8/dist/livekit-client.umd.min.js"></script>
+    <script src="https://unpkg.com/livekit-client@1.15.13/dist/livekit-client.umd.min.js"></script>
     <script>
         let room = null;
         let localAudioTrack = null;
@@ -225,8 +225,8 @@
 
                 const { token, livekit_url } = await response.json();
 
-                // Create room (use window.LivekitClient to ensure global access)
-                room = new window.LivekitClient.Room();
+                // Create room (LiveKit namespace in v1.x)
+                room = new LivekitClient.Room();
 
                 // Event handlers
                 room.on('participantConnected', (participant) => {
@@ -252,7 +252,7 @@
                 await room.connect(livekit_url, token);
 
                 // Publish local audio
-                localAudioTrack = await window.LivekitClient.createLocalAudioTrack();
+                localAudioTrack = await LivekitClient.createLocalAudioTrack();
                 await room.localParticipant.publishTrack(localAudioTrack);
 
                 updateStatus('✅', 'Conectado - El asistente te va a atender al toque');
