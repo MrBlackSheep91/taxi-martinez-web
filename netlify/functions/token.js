@@ -1,22 +1,4 @@
-const crypto = require('crypto');
-
-// Simple JWT generation without external dependencies
-function createJWT(apiKey, apiSecret, payload) {
-    const header = {
-        alg: 'HS256',
-        typ: 'JWT'
-    };
-
-    const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
-    const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64url');
-
-    const signature = crypto
-        .createHmac('sha256', apiSecret)
-        .update(`${base64Header}.${base64Payload}`)
-        .digest('base64url');
-
-    return `${base64Header}.${base64Payload}.${signature}`;
-}
+const jwt = require('jsonwebtoken');
 
 exports.handler = async (event) => {
     // Handle CORS preflight
@@ -78,7 +60,7 @@ exports.handler = async (event) => {
             };
         }
 
-        // Create JWT payload
+        // Create JWT payload for LiveKit
         const now = Math.floor(Date.now() / 1000);
         const payload = {
             iss: apiKey,
@@ -95,7 +77,10 @@ exports.handler = async (event) => {
             }
         };
 
-        const token = createJWT(apiKey, apiSecret, payload);
+        // Sign the JWT using jsonwebtoken library
+        const token = jwt.sign(payload, apiSecret, {
+            algorithm: 'HS256'
+        });
 
         return {
             statusCode: 200,
