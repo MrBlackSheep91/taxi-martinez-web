@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { AccessToken } = require('livekit-server-sdk');
 
 exports.handler = async (event) => {
     // Handle CORS preflight
@@ -60,27 +60,23 @@ exports.handler = async (event) => {
             };
         }
 
-        // Create JWT payload for LiveKit
-        const now = Math.floor(Date.now() / 1000);
-        const payload = {
-            iss: apiKey,
-            sub: participant_name,
+        // Create access token using LiveKit's official SDK
+        const at = new AccessToken(apiKey, apiSecret, {
+            identity: participant_name,
             name: participant_name,
-            nbf: now,
-            exp: now + 600, // 10 minutes
-            video: {
-                room: room_name,
-                roomJoin: true,
-                canPublish: true,
-                canSubscribe: true,
-                canPublishData: true
-            }
-        };
-
-        // Sign the JWT using jsonwebtoken library
-        const token = jwt.sign(payload, apiSecret, {
-            algorithm: 'HS256'
+            ttl: '10m'
         });
+
+        // Add video grants
+        at.addGrant({
+            roomJoin: true,
+            room: room_name,
+            canPublish: true,
+            canSubscribe: true,
+            canPublishData: true
+        });
+
+        const token = await at.toJwt();
 
         return {
             statusCode: 200,

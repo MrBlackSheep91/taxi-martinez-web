@@ -6,7 +6,7 @@
     "dev": "netlify dev"
   },
   "dependencies": {
-    "jsonwebtoken": "^9.0.2"
+    "livekit-server-sdk": "^2.7.0"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0"
