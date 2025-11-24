@@ -188,7 +188,29 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/livekit-client@1.15.13/dist/livekit-client.umd.min.js"></script>
+    <script>
+        // Load LiveKit library dynamically and ensure it's ready
+        function loadLiveKit() {
+            return new Promise((resolve, reject) => {
+                if (window.LivekitClient) {
+                    resolve(window.LivekitClient);
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/livekit-client@1.15.13/dist/livekit-client.umd.min.js';
+                script.onload = () => {
+                    if (window.LivekitClient) {
+                        resolve(window.LivekitClient);
+                    } else {
+                        reject(new Error('LiveKit no se cargó correctamente'));
+                    }
+                };
+                script.onerror = () => reject(new Error('Error cargando LiveKit'));
+                document.head.appendChild(script);
+            });
+        }
+    </script>
     <script>
         let room = null;
         let localAudioTrack = null;
@@ -204,8 +226,13 @@
             const disconnectBtn = document.getElementById('disconnectBtn');
 
             try {
-                updateStatus('🔄', 'Conectando...', true);
+                updateStatus('🔄', 'Cargando...', true);
                 connectBtn.disabled = true;
+
+                // Load LiveKit first
+                await loadLiveKit();
+
+                updateStatus('🔄', 'Conectando...', true);
 
                 // Get token from backend
                 const response = await fetch('/.netlify/functions/token', {
@@ -225,8 +252,8 @@
 
                 const { token, livekit_url } = await response.json();
 
-                // Create room (LiveKit namespace in v1.x)
-                room = new LivekitClient.Room();
+                // Create room
+                room = new window.LivekitClient.Room();
 
                 // Event handlers
                 room.on('participantConnected', (participant) => {
@@ -252,7 +279,7 @@
                 await room.connect(livekit_url, token);
 
                 // Publish local audio
-                localAudioTrack = await LivekitClient.createLocalAudioTrack();
+                localAudioTrack = await window.LivekitClient.createLocalAudioTrack();
                 await room.localParticipant.publishTrack(localAudioTrack);
 
                 updateStatus('✅', 'Conectado - El asistente te va a atender al toque');
