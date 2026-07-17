@@ -2,6 +2,8 @@
 
 Web interface for Taxi Martínez voice agent. Call and book a taxi using voice in Uruguayan Spanish!
 
+> ⚠️ **SECURITY NOTICE (2026-07-17):** This README previously contained hardcoded LiveKit API credentials. They have been redacted from the repository HEAD. **The exposed credentials MUST be rotated in the LiveKit cloud dashboard** — a git history rewrite is optional and does NOT replace rotation, because the leaked values were already public.
+
 ## 🌐 Live Demo
 
 Once deployed, you can access the app at your Netlify URL.
@@ -14,10 +16,10 @@ Once deployed, you can access the app at your Netlify URL.
 2. Click "Add new site" → "Import an existing project"
 3. Choose GitHub and select `taxi-martinez-web`
 4. Netlify will auto-detect settings from `netlify.toml`
-5. Add environment variables:
-   - `LIVEKIT_URL`: `wss://innovateam-2onbh9x3.livekit.cloud`
-   - `LIVEKIT_API_KEY`: `APIcZD23G3zyAQU`
-   - `LIVEKIT_API_SECRET`: `YcFfxJr5EdpNMpB3ZebDmEFbt7R6soehgUpPpkExzwrA`
+5. Add environment variables (generate them in your LiveKit cloud dashboard — do NOT commit real values):
+   - `LIVEKIT_URL`: `wss://<your-livekit-project>.livekit.cloud`
+   - `LIVEKIT_API_KEY`: `<your-livekit-api-key>`
+   - `LIVEKIT_API_SECRET`: `<your-livekit-api-secret>`
 6. Click "Deploy site"
 
 ### Option 2: Netlify CLI
@@ -34,10 +36,11 @@ cd taxi-martinez-web
 netlify deploy --prod
 ```
 
-When prompted for environment variables, use:
-- `LIVEKIT_URL=wss://innovateam-2onbh9x3.livekit.cloud`
-- `LIVEKIT_API_KEY=APIcZD23G3zyAQU`
-- `LIVEKIT_API_SECRET=YcFfxJr5EdpNMpB3ZebDmEFbt7R6soehgUpPpkExzwrA`
+When prompted for environment variables, use (generate them in your LiveKit cloud dashboard — do NOT commit real values):
+
+- `LIVEKIT_URL=wss://<your-livekit-project>.livekit.cloud`
+- `LIVEKIT_API_KEY=<your-livekit-api-key>`
+- `LIVEKIT_API_SECRET=<your-livekit-api-secret>`
 
 ## 🔧 Local Development
 
@@ -49,7 +52,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:8888
+Then open <http://localhost:8888>
 
 ## 📱 How to Use
 
