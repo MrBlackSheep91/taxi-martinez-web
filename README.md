@@ -16,8 +16,8 @@ Once deployed, you can access the app at your Netlify URL.
 4. Netlify will auto-detect settings from `netlify.toml`
 5. Add environment variables:
    - `LIVEKIT_URL`: `wss://innovateam-2onbh9x3.livekit.cloud`
-   - `LIVEKIT_API_KEY`: `APIcZD23G3zyAQU`
-   - `LIVEKIT_API_SECRET`: `YcFfxJr5EdpNMpB3ZebDmEFbt7R6soehgUpPpkExzwrA`
+   - `LIVEKIT_API_KEY`: `[REDACTED-rotar]`
+   - `LIVEKIT_API_SECRET`: `[REDACTED-rotar]`
 6. Click "Deploy site"
 
 ### Option 2: Netlify CLI
@@ -36,8 +36,8 @@ netlify deploy --prod
 
 When prompted for environment variables, use:
 - `LIVEKIT_URL=wss://innovateam-2onbh9x3.livekit.cloud`
-- `LIVEKIT_API_KEY=APIcZD23G3zyAQU`
-- `LIVEKIT_API_SECRET=YcFfxJr5EdpNMpB3ZebDmEFbt7R6soehgUpPpkExzwrA`
+- `LIVEKIT_API_KEY=[REDACTED-rotar]`
+- `LIVEKIT_API_SECRET=[REDACTED-rotar]`
 
 ## 🔧 Local Development
 
